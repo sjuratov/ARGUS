@@ -380,7 +380,7 @@ def ocr_provider_settings_form():
                         if not deepseek_endpoint:
                             st.error("❌ DeepSeek-V4-Pro endpoint is required when using DeepSeek-V4-Pro provider!")
                             return
-                        if not deepseek_key and current_deepseek_key_display in ["", "***HIDDEN***"]:
+                        if not deepseek_key and current_deepseek_key_display == "":
                             st.error("❌ DeepSeek-V4-Pro API key is required!")
                             return
                         if not deepseek_model:
