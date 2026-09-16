@@ -891,7 +891,7 @@ For production file uploads, you need to:
         "include_images": "boolean",
         "enable_summary": "boolean",
         "enable_evaluation": "boolean",
-        "ocr_provider": "string (azure|mistral)"
+        "ocr_provider": "string (azure|mistral|deepseek)"
       }
     }
   }
@@ -900,7 +900,7 @@ For production file uploads, you need to:
 
 ### OCR Provider Configuration
 
-ARGUS supports two OCR providers for document text extraction:
+ARGUS supports three OCR providers for document text extraction:
 
 1. **Azure Document Intelligence** (default)
    - Uses Azure's Document Intelligence service
@@ -911,6 +911,13 @@ ARGUS supports two OCR providers for document text extraction:
    - Uses Mistral's Document AI API
    - Requires `MISTRAL_DOC_AI_ENDPOINT` and `MISTRAL_DOC_AI_KEY` environment variables
    - Configured with `"ocr_provider": "mistral"`
+   - Supports base64-encoded PDFs and images
+   - Can use structured extraction with bbox annotation
+
+3. **DeepSeek-V4-Pro** (alternative)
+   - Uses DeepSeek's Document AI API
+   - Requires `DEEPSEEK_DOC_AI_ENDPOINT` and `DEEPSEEK_DOC_AI_KEY` environment variables
+   - Configured with `"ocr_provider": "deepseek"`
    - Supports base64-encoded PDFs and images
    - Can use structured extraction with bbox annotation
 
@@ -939,6 +946,33 @@ ARGUS supports two OCR providers for document text extraction:
 ```bash
 MISTRAL_DOC_AI_ENDPOINT=https://your-endpoint.services.ai.azure.com/providers/mistral/azure/ocr
 MISTRAL_DOC_AI_KEY=your-mistral-api-key
+```
+
+**Example Configuration with DeepSeek-V4-Pro:**
+```json
+{
+  "id": "configuration",
+  "partitionKey": "configuration",
+  "datasets": {
+    "medical-dataset": {
+      "system_prompt": "Extract medical information...",
+      "output_schema": {...},
+      "processing_options": {
+        "include_ocr": true,
+        "include_images": true,
+        "enable_summary": true,
+        "enable_evaluation": true,
+        "ocr_provider": "deepseek"
+      }
+    }
+  }
+}
+```
+
+**Environment Variables Required for DeepSeek-V4-Pro:**
+```bash
+DEEPSEEK_DOC_AI_ENDPOINT=https://your-endpoint.services.ai.azure.com/providers/deepseek/azure/ocr
+DEEPSEEK_DOC_AI_KEY=your-deepseek-api-key
 ```
 
 ### Event Grid Event Model

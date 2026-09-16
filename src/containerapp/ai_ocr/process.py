@@ -154,6 +154,7 @@ def safe_parse_json(content: str) -> dict:
 
 from ai_ocr.azure.doc_intelligence import get_ocr_results as get_azure_ocr_results
 from ai_ocr.azure.mistral_doc_intelligence import get_ocr_results as get_mistral_ocr_results
+from ai_ocr.azure.deepseek_doc_intelligence import get_ocr_results as get_deepseek_ocr_results
 from ai_ocr.azure.openai_ops import load_image, get_size_of_base64_images
 from ai_ocr.chains import get_structured_data, get_summary_with_gpt, perform_gpt_evaluation_and_enrichment
 from ai_ocr.model import Config
@@ -458,10 +459,12 @@ def run_ocr_processing(file_to_ocr: str, document: dict, container: any, conf_co
         # Select the appropriate OCR function
         if ocr_provider == 'mistral':
             ocr_result = get_mistral_ocr_results(file_to_ocr, None)
+        elif ocr_provider == 'deepseek':
+            ocr_result = get_deepseek_ocr_results(file_to_ocr, None)
         elif ocr_provider == 'azure':
             ocr_result = get_azure_ocr_results(file_to_ocr, None)
         else:
-            raise ValueError(f"Unknown OCR provider: {ocr_provider}. Supported providers: 'azure', 'mistral'")
+            raise ValueError(f"Unknown OCR provider: {ocr_provider}. Supported providers: 'azure', 'mistral', 'deepseek'")
         
         # Don't update document's ocr_output here for chunks - let caller handle merging
         ocr_processing_time = (datetime.now() - ocr_start_time).total_seconds()

@@ -36,7 +36,7 @@ Traditional OCR solutions extract text but miss the context. AI-only approaches 
 
 ### 🔍 **Intelligent Document Understanding**
 - **Hybrid AI Pipeline**: Combines OCR precision with LLM reasoning
-- **Multiple OCR Providers**: Azure Document Intelligence or Mistral Document AI
+- **Multiple OCR Providers**: Azure Document Intelligence, Mistral Document AI, or DeepSeek-V4-Pro
 - **Context-Aware Extraction**: Understands relationships between data points
 - **Multi-Format Support**: PDFs, images, forms, invoices, medical records
 - **Zero-Shot Learning**: Works on new document types without training
@@ -87,9 +87,11 @@ graph TB
         D --> E{🔍 OCR Provider}
         E -->|Azure| E1[Azure Document Intelligence]
         E -->|Mistral| E2[Mistral Document AI]
+        E -->|DeepSeek| E3[DeepSeek-V4-Pro]
         D --> F[🤖 GPT-5.4]
         E1 --> G[⚙️ Hybrid Processing Pipeline]
         E2 --> G
+        E3 --> G
         F --> G
     end
     
@@ -132,7 +134,7 @@ graph TB
 | **📱 Frontend UI** | Next.js (React) | Modern document management interface |
 | **📁 Document Storage** | Azure Blob Storage | Secure, scalable document repository |
 | **🗄️ Metadata Database** | Azure Cosmos DB | Results, configurations, and analytics |
-| **🔍 OCR Engine** | Azure Document Intelligence or Mistral Document AI | Structured text and layout extraction |
+| **🔍 OCR Engine** | Azure Document Intelligence, Mistral Document AI, or DeepSeek-V4-Pro | Structured text and layout extraction |
 | **🧠 AI Reasoning** | Azure OpenAI (GPT-5.4) | Contextual understanding and extraction |
 | **🏗️ Container Registry** | Azure Container Registry | Private, secure container images |
 | **🔒 Security** | Managed Identity + RBAC | Zero-credential architecture |
@@ -422,10 +424,11 @@ Datasets are managed through the web frontend interface (deployed automatically 
 
 ### � OCR Provider Configuration
 
-ARGUS supports **two OCR providers** for document text extraction:
+ARGUS supports **three OCR providers** for document text extraction:
 
 - **Azure Document Intelligence** (Default): Microsoft's enterprise OCR service with advanced layout understanding
 - **Mistral Document AI**: Mistral's document processing service with markdown-optimized output
+- **DeepSeek-V4-Pro**: DeepSeek's document processing service with markdown-optimized output
 
 <details>
 <summary><b>🔧 Configure OCR Provider</b></summary>
@@ -436,23 +439,33 @@ ARGUS supports **two OCR providers** for document text extraction:
 3. Choose your provider:
    - **Azure**: Uses Azure Document Intelligence (automatically configured during deployment)
    - **Mistral**: Requires additional configuration (endpoint, API key, model name)
+   - **DeepSeek-V4-Pro**: Requires additional configuration (endpoint, API key, model name)
 4. For Mistral, enter:
    - **Mistral Endpoint**: Your Mistral Document AI API endpoint URL
    - **Mistral API Key**: Your Mistral API authentication key
    - **Mistral Model**: Model name (default: `mistral-document-ai-2505`)
-5. Click **"Update OCR Provider"** to apply changes
+5. For DeepSeek-V4-Pro, enter:
+   - **DeepSeek-V4-Pro Endpoint**: Your DeepSeek-V4-Pro Document AI API endpoint URL
+   - **DeepSeek-V4-Pro API Key**: Your DeepSeek-V4-Pro API authentication key
+   - **DeepSeek-V4-Pro Model**: Model name (default: `deepseek-v4-pro`)
+6. Click **"Update OCR Provider"** to apply changes
 
 **Via Environment Variables**:
 Set the following environment variables in your deployment:
 
 ```bash
 # Choose OCR provider
-OCR_PROVIDER=mistral  # or "azure" (default)
+OCR_PROVIDER=mistral  # or "azure" (default) or "deepseek"
 
 # Mistral-specific configuration (only needed if OCR_PROVIDER=mistral)
 MISTRAL_DOC_AI_ENDPOINT=https://your-endpoint.services.ai.azure.com/providers/mistral/azure/ocr
 MISTRAL_DOC_AI_KEY=your-mistral-api-key
 MISTRAL_DOC_AI_MODEL=mistral-document-ai-2505
+
+# DeepSeek-V4-Pro-specific configuration (only needed if OCR_PROVIDER=deepseek)
+DEEPSEEK_DOC_AI_ENDPOINT=https://your-endpoint.services.ai.azure.com/providers/deepseek/azure/ocr
+DEEPSEEK_DOC_AI_KEY=your-deepseek-api-key
+DEEPSEEK_DOC_AI_MODEL=deepseek-v4-pro
 ```
 
 **Update via Azure Portal**:
@@ -472,6 +485,16 @@ az containerapp update \
     MISTRAL_DOC_AI_ENDPOINT="https://your-endpoint.../ocr" \
     MISTRAL_DOC_AI_KEY="your-api-key" \
     MISTRAL_DOC_AI_MODEL="mistral-document-ai-2505"
+
+# Switch to DeepSeek-V4-Pro
+az containerapp update \
+  --name <your-backend-app-name> \
+  --resource-group <your-resource-group> \
+  --set-env-vars \
+    OCR_PROVIDER="deepseek" \
+    DEEPSEEK_DOC_AI_ENDPOINT="https://your-endpoint.../ocr" \
+    DEEPSEEK_DOC_AI_KEY="your-api-key" \
+    DEEPSEEK_DOC_AI_MODEL="deepseek-v4-pro"
 
 # Switch back to Azure
 az containerapp update \
@@ -562,6 +585,8 @@ ARGUS/
 │   │   │   └── 📂 azure/                # ☁️ Azure Service Integrations
 │   │   │       ├── ⚙️ config.py         # Environment & configuration management
 │   │   │       ├── 📄 doc_intelligence.py # Azure Document Intelligence OCR
+│   │   │       ├── 📄 mistral_doc_intelligence.py # Mistral Document AI OCR
+│   │   │       ├── 📄 deepseek_doc_intelligence.py # DeepSeek-V4-Pro OCR
 │   │   │       ├── 🖼️ images.py         # PDF to image conversion utilities
 │   │   │       └── 🤖 openai_ops.py     # Azure OpenAI API operations
 │   │   │

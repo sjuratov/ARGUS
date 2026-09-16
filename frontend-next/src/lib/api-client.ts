@@ -67,7 +67,7 @@ export interface ProcessingOptions {
   include_images?: boolean
   enable_summary?: boolean
   enable_evaluation?: boolean
-  ocr_provider?: "azure" | "mistral"
+  ocr_provider?: "azure" | "mistral" | "deepseek"
 }
 
 export interface DatasetConfig {
@@ -142,6 +142,9 @@ export interface OpenAISettings {
   mistral_endpoint?: string
   mistral_key?: string
   mistral_model?: string
+  deepseek_endpoint?: string
+  deepseek_key?: string
+  deepseek_model?: string
   note?: string
 }
 
