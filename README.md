@@ -91,6 +91,7 @@ graph TB
         D --> F[🤖 GPT-5.4]
         E1 --> G[⚙️ Hybrid Processing Pipeline]
         E2 --> G
+        E3 --> G
         F --> G
     end
     
