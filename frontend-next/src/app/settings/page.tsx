@@ -53,6 +53,9 @@ interface OpenAISettingsResponse {
   mistral_endpoint?: string
   mistral_key?: string
   mistral_model?: string
+  deepseek_endpoint?: string
+  deepseek_key?: string
+  deepseek_model?: string
   note?: string
 }
 
@@ -75,6 +78,10 @@ export default function SettingsPage() {
   const [mistralKey, setMistralKey] = React.useState("")
   const [mistralModel, setMistralModel] = React.useState("mistral-document-ai-2505")
   const [showMistralKey, setShowMistralKey] = React.useState(false)
+  const [deepseekEndpoint, setDeepseekEndpoint] = React.useState("")
+  const [deepseekKey, setDeepseekKey] = React.useState("")
+  const [deepseekModel, setDeepseekModel] = React.useState("deepseek-v4-pro")
+  const [showDeepseekKey, setShowDeepseekKey] = React.useState(false)
   const [isSavingOcr, setIsSavingOcr] = React.useState(false)
 
   // Concurrency Settings state (Logic App Manager)
@@ -128,6 +135,9 @@ export default function SettingsPage() {
       setMistralEndpoint(settings.mistral_endpoint || "")
       setMistralKey(settings.mistral_key === "***HIDDEN***" ? "" : settings.mistral_key || "")
       setMistralModel(settings.mistral_model || "mistral-document-ai-2505")
+      setDeepseekEndpoint(settings.deepseek_endpoint || "")
+      setDeepseekKey(settings.deepseek_key === "***HIDDEN***" ? "" : settings.deepseek_key || "")
+      setDeepseekModel(settings.deepseek_model || "deepseek-v4-pro")
     } catch (error) {
       console.error("Failed to load OpenAI settings:", error)
       toast.error("Failed to load settings")
@@ -140,6 +150,13 @@ export default function SettingsPage() {
     if (ocrProvider === "mistral") {
       if (!mistralEndpoint) {
         toast.error("Mistral endpoint is required")
+        return
+      }
+    }
+
+    if (ocrProvider === "deepseek") {
+      if (!deepseekEndpoint) {
+        toast.error("DeepSeek-V4-Pro endpoint is required")
         return
       }
     }
@@ -157,9 +174,22 @@ export default function SettingsPage() {
         }
         updateData.mistral_model = mistralModel
       }
+
+      if (ocrProvider === "deepseek") {
+        updateData.deepseek_endpoint = deepseekEndpoint
+        if (deepseekKey) {
+          updateData.deepseek_key = deepseekKey
+        }
+        updateData.deepseek_model = deepseekModel
+      }
       
       await backendClient.updateOpenAISettings(updateData)
-      toast.success(`OCR provider updated to ${ocrProvider === "azure" ? "Azure Document Intelligence" : "Mistral OCR"}`, {
+      const providerLabel = ocrProvider === "azure"
+        ? "Azure Document Intelligence"
+        : ocrProvider === "mistral"
+          ? "Mistral OCR"
+          : "DeepSeek-V4-Pro"
+      toast.success(`OCR provider updated to ${providerLabel}`, {
         description: "Changes are active immediately for new document processing"
       })
       loadOpenAISettings()
@@ -332,6 +362,7 @@ export default function SettingsPage() {
                         </div>
                       </SelectItem>
                       <SelectItem value="mistral">Mistral Document AI</SelectItem>
+                      <SelectItem value="deepseek">DeepSeek-V4-Pro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -345,11 +376,19 @@ export default function SettingsPage() {
                         table extraction, and form recognition.
                       </p>
                     </div>
-                  ) : (
+                  ) : ocrProvider === "mistral" ? (
                     <div className="space-y-2">
                       <p className="font-medium">Mistral Document AI</p>
                       <p className="text-muted-foreground">
                         Mistral&apos;s document understanding API. Good for general text 
+                        extraction with lower costs.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="font-medium">DeepSeek-V4-Pro</p>
+                      <p className="text-muted-foreground">
+                        DeepSeek&apos;s document understanding API. Good for general text 
                         extraction with lower costs.
                       </p>
                     </div>
@@ -399,6 +438,54 @@ export default function SettingsPage() {
                         placeholder="mistral-document-ai-2505"
                         value={mistralModel}
                         onChange={(e) => setMistralModel(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* DeepSeek Settings - show only when DeepSeek-V4-Pro is selected */}
+                {ocrProvider === "deepseek" && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="deepseek-endpoint">DeepSeek-V4-Pro Endpoint</Label>
+                      <Input
+                        id="deepseek-endpoint"
+                        placeholder="https://your-endpoint.services.ai.azure.com/providers/deepseek/azure/ocr"
+                        value={deepseekEndpoint}
+                        onChange={(e) => setDeepseekEndpoint(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deepseek-key">DeepSeek-V4-Pro API Key</Label>
+                      <div className="relative">
+                        <Input
+                          id="deepseek-key"
+                          type={showDeepseekKey ? "text" : "password"}
+                          placeholder="Enter your DeepSeek-V4-Pro API key"
+                          value={deepseekKey}
+                          onChange={(e) => setDeepseekKey(e.target.value)}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowDeepseekKey(!showDeepseekKey)}
+                        >
+                          {showDeepseekKey ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deepseek-model">DeepSeek-V4-Pro Model</Label>
+                      <Input
+                        id="deepseek-model"
+                        placeholder="deepseek-v4-pro"
+                        value={deepseekModel}
+                        onChange={(e) => setDeepseekModel(e.target.value)}
                       />
                     </div>
                   </div>
@@ -547,10 +634,13 @@ export default function SettingsPage() {
                     </li>
                     <li>For OCR provider (optional):
                       <ul className="list-disc list-inside ml-4 mt-1">
-                        <li><code className="bg-muted px-1 rounded">OCR_PROVIDER</code> - Set to <code className="bg-muted px-1 rounded">azure</code> or <code className="bg-muted px-1 rounded">mistral</code></li>
+                        <li><code className="bg-muted px-1 rounded">OCR_PROVIDER</code> - Set to <code className="bg-muted px-1 rounded">azure</code>, <code className="bg-muted px-1 rounded">mistral</code>, or <code className="bg-muted px-1 rounded">deepseek</code></li>
                         <li><code className="bg-muted px-1 rounded">MISTRAL_ENDPOINT</code> - Mistral API endpoint (if using Mistral)</li>
                         <li><code className="bg-muted px-1 rounded">MISTRAL_API_KEY</code> - Mistral API key (if using Mistral)</li>
                         <li><code className="bg-muted px-1 rounded">MISTRAL_DOC_AI_MODEL</code> - Model name (default: mistral-document-ai-2505)</li>
+                        <li><code className="bg-muted px-1 rounded">DEEPSEEK_DOC_AI_ENDPOINT</code> - DeepSeek-V4-Pro API endpoint (if using DeepSeek-V4-Pro)</li>
+                        <li><code className="bg-muted px-1 rounded">DEEPSEEK_DOC_AI_KEY</code> - DeepSeek-V4-Pro API key (if using DeepSeek-V4-Pro)</li>
+                        <li><code className="bg-muted px-1 rounded">DEEPSEEK_DOC_AI_MODEL</code> - Model name (default: deepseek-v4-pro)</li>
                       </ul>
                     </li>
                     <li><strong>Restart</strong> the container app for changes to take effect</li>
@@ -591,6 +681,19 @@ export default function SettingsPage() {
     MISTRAL_DOC_AI_MODEL="mistral-document-ai-2505"`}</pre>
                     </div>
                   </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Update OCR provider (optional - for DeepSeek-V4-Pro):</p>
+                    <div className="bg-muted rounded-lg p-4 font-mono text-sm overflow-x-auto">
+                      <pre className="whitespace-pre-wrap">{`az containerapp update \\
+  --name <your-backend-app-name> \\
+  --resource-group <your-resource-group> \\
+  --set-env-vars \\
+    OCR_PROVIDER="deepseek" \\
+    DEEPSEEK_DOC_AI_ENDPOINT="https://your-endpoint.services.ai.azure.com/..." \\
+    DEEPSEEK_DOC_AI_KEY="your-deepseek-key" \\
+    DEEPSEEK_DOC_AI_MODEL="deepseek-v4-pro"`}</pre>
+                    </div>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 
@@ -609,6 +712,7 @@ export default function SettingsPage() {
                       <ul className="list-disc list-inside ml-4 mt-1">
                         <li><code className="bg-muted px-1 rounded">AZURE_OPENAI_ENDPOINT</code>, <code className="bg-muted px-1 rounded">AZURE_OPENAI_API_KEY</code>, <code className="bg-muted px-1 rounded">AZURE_OPENAI_DEPLOYMENT_NAME</code></li>
                         <li><code className="bg-muted px-1 rounded">OCR_PROVIDER</code>, <code className="bg-muted px-1 rounded">MISTRAL_ENDPOINT</code>, <code className="bg-muted px-1 rounded">MISTRAL_API_KEY</code>, <code className="bg-muted px-1 rounded">MISTRAL_DOC_AI_MODEL</code></li>
+                        <li><code className="bg-muted px-1 rounded">DEEPSEEK_DOC_AI_ENDPOINT</code>, <code className="bg-muted px-1 rounded">DEEPSEEK_DOC_AI_KEY</code>, <code className="bg-muted px-1 rounded">DEEPSEEK_DOC_AI_MODEL</code></li>
                       </ul>
                     </li>
                     <li>Run <code className="bg-muted px-1 rounded">azd up</code> to redeploy with new settings</li>

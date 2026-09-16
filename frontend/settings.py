@@ -257,10 +257,11 @@ def ocr_provider_settings_form():
                 current_provider = current_settings.get('ocr_provider', 'azure')
                 
                 # OCR Provider Selection
+                provider_options = ["azure", "mistral", "deepseek"]
                 ocr_provider = st.radio(
                     "OCR Provider",
-                    options=["azure", "mistral"],
-                    index=0 if current_provider == "azure" else 1,
+                    options=provider_options,
+                    index=provider_options.index(current_provider) if current_provider in provider_options else 0,
                     help="Choose which OCR service to use for text extraction from documents",
                     horizontal=True
                 )
@@ -271,6 +272,11 @@ def ocr_provider_settings_form():
                 mistral_endpoint = ""
                 mistral_key = ""
                 mistral_model = ""
+                
+                # Initialize variables for DeepSeek settings
+                deepseek_endpoint = ""
+                deepseek_key = ""
+                deepseek_model = ""
                 
                 # Show provider-specific settings
                 if ocr_provider == "azure":
@@ -310,6 +316,39 @@ def ocr_provider_settings_form():
                         placeholder="mistral-document-ai-2505"
                     )
                 
+                elif ocr_provider == "deepseek":
+                    st.markdown("**DeepSeek-V4-Pro** is selected")
+                    
+                    # Get current DeepSeek settings
+                    current_deepseek_endpoint = current_settings.get('deepseek_endpoint', '')
+                    current_deepseek_key_display = current_settings.get('deepseek_key', '')
+                    current_deepseek_model = current_settings.get('deepseek_model', 'deepseek-v4-pro')
+                    
+                    # DeepSeek Endpoint
+                    deepseek_endpoint = st.text_input(
+                        "DeepSeek-V4-Pro Endpoint",
+                        value=current_deepseek_endpoint,
+                        help="Your DeepSeek-V4-Pro Document AI API endpoint URL",
+                        placeholder="https://your-endpoint.services.ai.azure.com/providers/deepseek/azure/ocr"
+                    )
+                    
+                    # DeepSeek API Key
+                    deepseek_key = st.text_input(
+                        "DeepSeek-V4-Pro API Key",
+                        value="" if current_deepseek_key_display == "***HIDDEN***" else current_deepseek_key_display,
+                        type="password",
+                        help="Your DeepSeek-V4-Pro API key (leave blank to keep current key)",
+                        placeholder="Enter new key or leave blank to keep current"
+                    )
+                    
+                    # DeepSeek Model Name
+                    deepseek_model = st.text_input(
+                        "DeepSeek-V4-Pro Model Name",
+                        value=current_deepseek_model,
+                        help="The DeepSeek-V4-Pro Document AI model to use (default: deepseek-v4-pro)",
+                        placeholder="deepseek-v4-pro"
+                    )
+                
                 # Submit button
                 submit_ocr = st.form_submit_button("🔄 Update OCR Provider", type="primary")
                 
@@ -336,6 +375,23 @@ def ocr_provider_settings_form():
                             update_data["mistral_key"] = mistral_key
                         update_data["mistral_model"] = mistral_model
                     
+                    # Validate DeepSeek-specific inputs
+                    if ocr_provider == "deepseek":
+                        if not deepseek_endpoint:
+                            st.error("❌ DeepSeek-V4-Pro endpoint is required when using DeepSeek-V4-Pro provider!")
+                            return
+                        if not deepseek_key and current_deepseek_key_display in ["", "***HIDDEN***"]:
+                            st.error("❌ DeepSeek-V4-Pro API key is required!")
+                            return
+                        if not deepseek_model:
+                            st.error("❌ DeepSeek-V4-Pro model name is required!")
+                            return
+                        
+                        update_data["deepseek_endpoint"] = deepseek_endpoint
+                        if deepseek_key:
+                            update_data["deepseek_key"] = deepseek_key
+                        update_data["deepseek_model"] = deepseek_model
+                    
                     # Update settings
                     success = update_openai_env_vars(backend_url, update_data)
                     if success:
@@ -355,10 +411,13 @@ def ocr_provider_settings_form():
             1. Go to Azure Portal → Container Apps → Your Backend App
             2. Navigate to **Settings** → **Environment variables**
             3. Update these variables:
-               - `OCR_PROVIDER` → `azure` or `mistral`
+               - `OCR_PROVIDER` → `azure`, `mistral`, or `deepseek`
                - `MISTRAL_DOC_AI_ENDPOINT` (if using Mistral)
                - `MISTRAL_DOC_AI_KEY` (if using Mistral)
                - `MISTRAL_DOC_AI_MODEL` (if using Mistral, default: mistral-document-ai-2505)
+               - `DEEPSEEK_DOC_AI_ENDPOINT` (if using DeepSeek-V4-Pro)
+               - `DEEPSEEK_DOC_AI_KEY` (if using DeepSeek-V4-Pro)
+               - `DEEPSEEK_DOC_AI_MODEL` (if using DeepSeek-V4-Pro, default: deepseek-v4-pro)
             4. **Restart** the container app
             
             **Option 2: Azure CLI**
@@ -378,6 +437,16 @@ def ocr_provider_settings_form():
                 MISTRAL_DOC_AI_ENDPOINT="https://your-endpoint.../ocr" \\
                 MISTRAL_DOC_AI_KEY="your-api-key" \\
                 MISTRAL_DOC_AI_MODEL="mistral-document-ai-2505"
+
+            # For DeepSeek-V4-Pro
+            az containerapp update \\
+              --name <app-name> \\
+              --resource-group <rg-name> \\
+              --set-env-vars \\
+                OCR_PROVIDER="deepseek" \\
+                DEEPSEEK_DOC_AI_ENDPOINT="https://your-endpoint.../ocr" \\
+                DEEPSEEK_DOC_AI_KEY="your-api-key" \\
+                DEEPSEEK_DOC_AI_MODEL="deepseek-v4-pro"
             ```
             """)
         
@@ -390,6 +459,10 @@ def ocr_provider_settings_form():
                     st.markdown("**Mistral Endpoint:**")
                     st.markdown("**Mistral Key:**")
                     st.markdown("**Mistral Model:**")
+                elif current_provider == "deepseek":
+                    st.markdown("**DeepSeek Endpoint:**")
+                    st.markdown("**DeepSeek Key:**")
+                    st.markdown("**DeepSeek Model:**")
             
             with col2:
                 provider_display = f"🔍 {current_provider.upper()}"
@@ -399,6 +472,13 @@ def ocr_provider_settings_form():
                     endpoint = current_settings.get('mistral_endpoint', 'Not configured')
                     key_status = '✅ Configured' if current_settings.get('mistral_key', '') != '' else '❌ Missing'
                     model = current_settings.get('mistral_model', 'mistral-document-ai-2505')
+                    st.code(endpoint)
+                    st.markdown(f"`{key_status}`")
+                    st.code(model)
+                elif current_provider == "deepseek":
+                    endpoint = current_settings.get('deepseek_endpoint', 'Not configured')
+                    key_status = '✅ Configured' if current_settings.get('deepseek_key', '') != '' else '❌ Missing'
+                    model = current_settings.get('deepseek_model', 'deepseek-v4-pro')
                     st.code(endpoint)
                     st.markdown(f"`{key_status}`")
                     st.code(model)
@@ -418,9 +498,16 @@ def ocr_provider_settings_form():
         - Requires Mistral API endpoint and key
         - Uses base64 encoding for document transmission
         
+        **DeepSeek-V4-Pro** (Alternative provider)
+        - DeepSeek's document understanding API
+        - Good for general text extraction
+        - Requires DeepSeek-V4-Pro API endpoint and key
+        - Uses base64 encoding for document transmission
+        
         **When to use each:**
         - **Azure**: Complex documents, forms, tables, production workloads
         - **Mistral**: Alternative provider, simple documents, testing
+        - **DeepSeek-V4-Pro**: Alternative provider, simple documents, testing
         
         **Note**: Changing the OCR provider affects all new document processing across all datasets.
         """)
