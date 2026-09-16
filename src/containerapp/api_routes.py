@@ -408,6 +408,9 @@ async def get_openai_settings():
             "mistral_endpoint": os.getenv("MISTRAL_DOC_AI_ENDPOINT", ""),
             "mistral_key": "***HIDDEN***" if os.getenv("MISTRAL_DOC_AI_KEY") else "",
             "mistral_model": os.getenv("MISTRAL_DOC_AI_MODEL", "mistral-document-ai-2505"),
+            "deepseek_endpoint": os.getenv("DEEPSEEK_DOC_AI_ENDPOINT", ""),
+            "deepseek_key": "***HIDDEN***" if os.getenv("DEEPSEEK_DOC_AI_KEY") else "",
+            "deepseek_model": os.getenv("DEEPSEEK_DOC_AI_MODEL", "deepseek-v4-pro"),
             "note": "Configuration is read from environment variables only. Update via deployment/infrastructure."
         }
         
@@ -436,6 +439,12 @@ async def update_openai_settings(request: Request):
             os.environ["MISTRAL_DOC_AI_KEY"] = data["mistral_key"]
         if "mistral_model" in data:
             os.environ["MISTRAL_DOC_AI_MODEL"] = data["mistral_model"]
+        if "deepseek_endpoint" in data:
+            os.environ["DEEPSEEK_DOC_AI_ENDPOINT"] = data["deepseek_endpoint"]
+        if "deepseek_key" in data:
+            os.environ["DEEPSEEK_DOC_AI_KEY"] = data["deepseek_key"]
+        if "deepseek_model" in data:
+            os.environ["DEEPSEEK_DOC_AI_MODEL"] = data["deepseek_model"]
         
         # Return success response with updated config (hide keys)
         updated_config = {
@@ -446,6 +455,9 @@ async def update_openai_settings(request: Request):
             "mistral_endpoint": os.environ.get("MISTRAL_DOC_AI_ENDPOINT", ""),
             "mistral_key": "***hidden***" if os.environ.get("MISTRAL_DOC_AI_KEY") else "",
             "mistral_model": os.environ.get("MISTRAL_DOC_AI_MODEL", "mistral-document-ai-2505"),
+            "deepseek_endpoint": os.environ.get("DEEPSEEK_DOC_AI_ENDPOINT", ""),
+            "deepseek_key": "***hidden***" if os.environ.get("DEEPSEEK_DOC_AI_KEY") else "",
+            "deepseek_model": os.environ.get("DEEPSEEK_DOC_AI_MODEL", "deepseek-v4-pro"),
             "env_var_only": True
         }
         
