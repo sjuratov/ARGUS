@@ -5,6 +5,7 @@ using DeepSeek's Document AI API.
 """
 import base64
 import logging
+import threading
 import httpx
 from typing import Optional
 from ai_ocr.azure.config import get_config
@@ -88,7 +89,6 @@ def get_ocr_results(file_path: str, cosmos_config_container=None, json_schema: O
     Returns:
         Extracted text content from the document
     """
-    import threading
     thread_id = threading.current_thread().ident
 
     logger.info(f"[Thread-{thread_id}] Starting DeepSeek-V4-Pro Document AI OCR for: {file_path}")
@@ -128,7 +128,7 @@ def get_ocr_results(file_path: str, cosmos_config_container=None, json_schema: O
     # Make request to DeepSeek API
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"******"
+        "Authorization": f"Bearer {api_key}"
     }
 
     logger.info(f"[Thread-{thread_id}] Submitting document to DeepSeek-V4-Pro Document AI API")
